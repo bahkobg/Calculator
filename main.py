@@ -13,7 +13,7 @@ class Display(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, text: str, color: tuple) -> None:
         super().__init__()
         self.text = text
-        self.width = 700
+        self.width = 712
         self.height = 100
         self.display_var = text
         self.x = x
@@ -26,6 +26,8 @@ class Display(pygame.sprite.Sprite):
         self.text_offset = self.font.size(self.text)
         self.text_offset_x = self.text_offset[0]
         self.text_offset_y = self.text_offset[1]
+        self.left = None
+        self.right = None
 
     def on_click(self):
         pass
@@ -49,6 +51,12 @@ class Display(pygame.sprite.Sprite):
             self.text_offset_x = self.text_offset[0]
             self.text_offset_y = self.text_offset[1]
 
+    def reset(self):
+        self.display_var = '0'
+        self.text_offset = self.font.size(self.text)
+        self.text_offset_x = self.text_offset[0] // 2
+        self.text_offset_y = self.text_offset[1] // 2
+
     def draw(self, surface):
         pygame.draw.rect(surface, self.color_main, self.rect)
         pygame.draw.rect(surface, self.color_border, self.rect, 1)
@@ -57,7 +65,7 @@ class Display(pygame.sprite.Sprite):
 
 
 class Button(pygame.sprite.Sprite):
-    def __init__(self, x: int, y: int, button_id, text: str, color: tuple, digit=False) -> None:
+    def __init__(self, x: int, y: int, button_id: str, text: str, color: tuple, digit=False) -> None:
         super().__init__()
         self.button_id = button_id
         self.text = text
@@ -86,6 +94,10 @@ class Button(pygame.sprite.Sprite):
     def get_button_text(self):
         return self.text
 
+    @property
+    def get_button_id(self):
+        return self.button_id
+
     def on_hover(self, x, y):
         if self.rect.collidepoint(x, y):
             self.color_main = GREY
@@ -109,33 +121,33 @@ class Runtime:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
         self.buttons = pygame.sprite.Group()
-        self.display = Display(10, 100, '0', GREY_LIGHT)
+        self.display = Display(0, 100, '0', GREY_LIGHT)
         self.display_var = '0'
         self.buttons.add(
-            Button(0, 232, 22, '%', GREY_LIGHT),
-            Button(0, 310, 22, 'CE', GREY_LIGHT),
-            Button(0, 388, 22, '7', GREY_WHITE, True),
-            Button(0, 466, 22, '4', GREY_WHITE, True),
-            Button(0, 544, 22, '1', GREY_WHITE, True),
-            Button(0, 622, 22, '+-', GREY_LIGHT),
-            Button(178, 232, 22, '√', GREY_LIGHT),
-            Button(178, 310, 22, 'C', GREY_LIGHT),
-            Button(178, 388, 22, '8', GREY_WHITE, True),
-            Button(178, 466, 22, '5', GREY_WHITE, True),
-            Button(178, 544, 22, '2', GREY_WHITE, True),
-            Button(178, 622, 22, '0', GREY_WHITE, True),
-            Button(356, 232, 22, 'x²', GREY_LIGHT),
-            Button(356, 310, 22, '<-', GREY_LIGHT),
-            Button(356, 388, 22, '9', GREY_WHITE, True),
-            Button(356, 466, 22, '6', GREY_WHITE, True),
-            Button(356, 544, 22, '3', GREY_WHITE, True),
-            Button(356, 622, 22, '.', GREY_LIGHT),
-            Button(534, 232, 22, '1/x', GREY_LIGHT),
-            Button(534, 310, 22, '÷', GREY_LIGHT),
-            Button(534, 388, 22, '*', GREY_LIGHT),
-            Button(534, 466, 22, '-', GREY_LIGHT),
-            Button(534, 544, 22, '+', GREY_LIGHT),
-            Button(534, 622, 22, '=', GREY_LIGHT)
+            Button(0, 232, '%', '%', GREY_LIGHT),
+            Button(0, 310, 'CE', 'CE', GREY_LIGHT),
+            Button(0, 388, '7', '7', GREY_WHITE, True),
+            Button(0, 466, '4', '4', GREY_WHITE, True),
+            Button(0, 544, '1', '1', GREY_WHITE, True),
+            Button(0, 622, '+-', '+-', GREY_LIGHT),
+            Button(178, 232, 'sqrt', '√', GREY_LIGHT),
+            Button(178, 310, 'C', 'C', GREY_LIGHT),
+            Button(178, 388, '8', '8', GREY_WHITE, True),
+            Button(178, 466, '5', '5', GREY_WHITE, True),
+            Button(178, 544, '2', '2', GREY_WHITE, True),
+            Button(178, 622, '0', '0', GREY_WHITE, True),
+            Button(356, 232, '**2', 'x²', GREY_LIGHT),
+            Button(356, 310, 'back', '<-', GREY_LIGHT),
+            Button(356, 388, '9', '9', GREY_WHITE, True),
+            Button(356, 466, '6', '6', GREY_WHITE, True),
+            Button(356, 544, '3', '3', GREY_WHITE, True),
+            Button(356, 622, '.', '.', GREY_LIGHT),
+            Button(534, 232, '1/', '1/x', GREY_LIGHT),
+            Button(534, 310, '/', '÷', GREY_LIGHT),
+            Button(534, 388, '*', '*', GREY_LIGHT),
+            Button(534, 466, '-', '-', GREY_LIGHT),
+            Button(534, 544, '+', '+', GREY_LIGHT),
+            Button(534, 622, '=', '=', GREY_LIGHT)
         )
 
     def on_mouse_button_down(self):
@@ -143,9 +155,11 @@ class Runtime:
         x = pos[0]
         y = pos[1]
         for button in self.buttons:
-            if button.on_click(x, y) and button.digit:
-                self.display.set_display_var(button.get_button_text)
-                print(button.get_button_text)
+            if button.on_click(x, y):
+                if button.digit:
+                    self.display.set_display_var(button.get_button_text)
+                elif button.get_button_id == 'CE' or button.get_button_id == 'C':
+                    self.display.reset()
 
     def on_mouse_button_up(self):
         pass
@@ -181,7 +195,7 @@ class Runtime:
             self.update()
 
             self.draw()
-            self.clock.tick(24)
+            self.clock.tick(30)
             pygame.display.update()
 
 
