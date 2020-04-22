@@ -23,11 +23,16 @@ class Display(pygame.sprite.Sprite):
         self.color_main = self.color
         self.color_border = GREY
         self.font = pygame.font.SysFont('segoeui', 48, bold=False)
+        self.font_p = pygame.font.SysFont('segoeui', 24, bold=False)
         self.text_offset = self.font.size(self.text)
         self.text_offset_x = self.text_offset[0]
         self.text_offset_y = self.text_offset[1]
-        self.left = None
-        self.right = None
+        self.text_offset_p = self.font_p.size(self.text)
+        self.text_offset_p_x = self.text_offset[0]
+        self.text_offset_p_y = self.text_offset[1]
+        self.expression = None
+        self.left = False
+        self.result = None
 
     def on_click(self):
         pass
@@ -57,11 +62,32 @@ class Display(pygame.sprite.Sprite):
         self.text_offset_x = self.text_offset[0] // 2
         self.text_offset_y = self.text_offset[1] // 2
 
+    def evaluate(self, x: str) -> None:
+        if self.display_var != '0':
+            if not self.expression:
+                self.expression = self.display_var + ' ' + x
+                self.text_offset_p = self.font_p.size(self.expression)
+                self.text_offset_p_x = self.text_offset[0]
+                self.text_offset_p_y = self.text_offset[1]
+                self.reset()
+            else:
+                try:
+                    self.display_var = str(eval(self.expression + self.display_var))
+                    self.text_offset = self.font.size(self.display_var)
+                    self.text_offset_x = self.text_offset[0]
+                    self.text_offset_y = self.text_offset[1]
+                    self.expression = None
+                except:
+                    print('FAIL')
+
     def draw(self, surface):
         pygame.draw.rect(surface, self.color_main, self.rect)
         pygame.draw.rect(surface, self.color_border, self.rect, 1)
         surface.blit(self.font.render(self.display_var, True, (32, 32, 32)),
                      (self.rect.topright[0] - self.text_offset_x - 20, self.rect.topright[1]))
+        if self.expression:
+            surface.blit(self.font_p.render(self.expression, True, (32, 32, 32)),
+                         (self.rect.topright[0] - self.text_offset_p_x - 10, self.rect.topright[1] - 40))
 
 
 class Button(pygame.sprite.Sprite):
@@ -160,6 +186,8 @@ class Runtime:
                     self.display.set_display_var(button.get_button_text)
                 elif button.get_button_id == 'CE' or button.get_button_id == 'C':
                     self.display.reset()
+                elif button.get_button_id == '/' or button.get_button_id == '*' or button.get_button_id == '-' or button.get_button_id == '+':
+                    self.display.evaluate(button.get_button_id)
 
     def on_mouse_button_up(self):
         pass
