@@ -24,6 +24,11 @@ class Display(pygame.sprite.Sprite):
         self.color_border = GREY
         self.font = pygame.font.SysFont('segoeui', 48, bold=False)
         self.font_p = pygame.font.SysFont('segoeui', 24, bold=False)
+        self.font_history = pygame.font.SysFont('segoeui', 16, bold=False)
+        self.font_result = pygame.font.SysFont('segoeui', 18, bold=True)
+        self.font_result_title = pygame.font.SysFont('segoeui', 18, bold=True)
+        self.font_title = pygame.font.SysFont('segoeui', 22, bold=True)
+        self.font_result_title.set_underline(1)
         self.text_offset = self.font.size(self.text)
         self.text_offset_x = self.text_offset[0]
         self.text_offset_y = self.text_offset[1]
@@ -33,6 +38,8 @@ class Display(pygame.sprite.Sprite):
         self.expression = None
         self.left = False
         self.result = None
+        self.history_expression = []
+        self.history_result = []
 
     def on_click(self):
         pass
@@ -72,7 +79,9 @@ class Display(pygame.sprite.Sprite):
                 self.reset()
             else:
                 try:
+                    self.history_expression.append(self.expression + ' ' + self.display_var + ' =')
                     self.display_var = str(eval(self.expression + self.display_var))
+                    self.history_result.append(self.display_var)
                     self.text_offset = self.font.size(self.display_var)
                     self.text_offset_x = self.text_offset[0]
                     self.text_offset_y = self.text_offset[1]
@@ -85,9 +94,23 @@ class Display(pygame.sprite.Sprite):
         pygame.draw.rect(surface, self.color_border, self.rect, 1)
         surface.blit(self.font.render(self.display_var, True, (32, 32, 32)),
                      (self.rect.topright[0] - self.text_offset_x - 20, self.rect.topright[1]))
+        surface.blit(self.font_result_title.render('Results', True, (32, 32, 32)),
+                     (self.rect.topright[0] + 50, self.rect.topright[1] - 60))
+        surface.blit(self.font_title.render('Standard Calculator', True, (32, 32, 32)),
+                     (10, 10))
         if self.expression:
             surface.blit(self.font_p.render(self.expression, True, (32, 32, 32)),
                          (self.rect.topright[0] - self.text_offset_p_x - 10, self.rect.topright[1] - 40))
+        if self.history_expression and self.history_result:
+            line_height = 0
+            for expression, result in zip(self.history_expression, self.history_result):
+                expression_offset = self.font_history.size(expression)
+                result_offset = self.font_result.size(result)
+                surface.blit(self.font_history.render(expression, True, (32, 32, 32)),
+                             (self.rect.topright[0] + 50, self.rect.topright[1] - expression_offset[1] + line_height))
+                surface.blit(self.font_result.render(result, True, (48, 48, 48)),
+                             (self.rect.topright[0] + 50, self.rect.topright[1] + line_height))
+                line_height += expression_offset[1] + result_offset[1] + 10
 
 
 class Button(pygame.sprite.Sprite):
